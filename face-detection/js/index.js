@@ -1,3 +1,9 @@
+// added helping funtions:
+Number.prototype.map = function (in_min, in_max, out_min, out_max) {
+  return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+//end
 let videoWidth, videoHeight;
 
 let qvga = {width: {exact: 320}, height: {exact: 240}};
@@ -5,6 +11,9 @@ let qvga = {width: {exact: 320}, height: {exact: 240}};
 let vga = {width: {exact: 640}, height: {exact: 480}};
 
 let resolution = window.innerWidth < 640 ? qvga : vga;
+
+let x=0, y=0,z=0;
+let centerX = 0,centerY = 0,centerZ = 0
 
 // whether streaming video from the camera.
 let streaming = false;
@@ -96,63 +105,60 @@ function processVideo() {
   if (detectFace.checked) {
     let faceVect = new cv.RectVector();
     let faceMat = new cv.Mat();
-    if (detectEye.checked) {
-      cv.pyrDown(grayMat, faceMat);
-      size = faceMat.size();
-    } else {
-      cv.pyrDown(grayMat, faceMat);
-      if (videoWidth > 320)
-        cv.pyrDown(faceMat, faceMat);
-      size = faceMat.size();
-    }
+    
+    cv.pyrDown(grayMat, faceMat);
+    if (videoWidth > 320)
+      cv.pyrDown(faceMat, faceMat);
+    size = faceMat.size();
+    
     faceClassifier.detectMultiScale(faceMat, faceVect);
     for (let i = 0; i < faceVect.size(); i++) {
       let face = faceVect.get(i);
       faces.push(new cv.Rect(face.x, face.y, face.width, face.height));
-      if (detectEye.checked) {
-        let eyeVect = new cv.RectVector();
-        let eyeMat = faceMat.roi(face);
-        eyeClassifier.detectMultiScale(eyeMat, eyeVect);
-        for (let i = 0; i < eyeVect.size(); i++) {
-          let eye = eyeVect.get(i);
-          eyes.push(new cv.Rect(face.x + eye.x, face.y + eye.y, eye.width, eye.height));
-        }
-        eyeMat.delete();
-        eyeVect.delete();
-      }
+      
     }
     faceMat.delete();
     faceVect.delete();
-  } else {
-    if (detectEye.checked) {
-      let eyeVect = new cv.RectVector();
-      let eyeMat = new cv.Mat();
-      cv.pyrDown(grayMat, eyeMat);
-      size = eyeMat.size();
-      eyeClassifier.detectMultiScale(eyeMat, eyeVect);
-      for (let i = 0; i < eyeVect.size(); i++) {
-        let eye = eyeVect.get(i);
-        eyes.push(new cv.Rect(eye.x, eye.y, eye.width, eye.height));
-      }
-      eyeMat.delete();
-      eyeVect.delete();
-    }
-  }
+  } 
   canvasOutputCtx.drawImage(canvasInput, 0, 0, videoWidth, videoHeight);
   drawResults(canvasOutputCtx, faces, 'red', size);
-  drawResults(canvasOutputCtx, eyes, 'yellow', size);
+  // drawResults(canvasOutputCtx, eyes, 'yellow', size);
   stats.end();
   requestAnimationFrame(processVideo);
 }
 
 function drawResults(ctx, results, color, size) {
   for (let i = 0; i < results.length; ++i) {
+
+    // let this be my loop to display info on
+    
     let rect = results[i];
     let xRatio = videoWidth/size.width;
     let yRatio = videoHeight/size.height;
     ctx.lineWidth = 3;
     ctx.strokeStyle = color;
     ctx.strokeRect(rect.x*xRatio, rect.y*yRatio, rect.width*xRatio, rect.height*yRatio);
+    let lerpP = .3;
+    x = (x)*(1-lerpP) + (rect.x*xRatio+(rect.width*xRatio/2)) * lerpP
+    y = (y)*(1-lerpP) + (rect.y*yRatio+(rect.height*yRatio/2)) * lerpP
+    
+    //human fave is read as 6.5 inches from 24 inches away
+    focalLength = 190 //asumme fl us 190 to get distance in inches
+    dist = (6.5*focalLength/rect.height)
+    z = (z)*(1-lerpP) + dist*lerpP
+    ctx.strokeRect(x, y, 200/z,200/z);
+    // adjust to x,y,z coordinates to be relitave to the center of camera vs top left
+    centerX = (x-videoWidth/2)
+    centerY = (y-videoHeight/2)
+    //make coordinate be equal to approximate inches from center of screen
+    centerX = ((centerX*dist)/focalLength)*.25
+    centerY = ((centerY*dist)/focalLength)*.25
+    centerZ = z
+    
+
+    // console.log(centerX)
+    console.log("x: "+ centerX+ " y: "+centerY+ " z: "+centerZ)
+
   }
 }
 
