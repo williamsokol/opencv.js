@@ -48,6 +48,7 @@ function startCamera() {
       video.setAttribute("height", videoHeight);
       canvasOutput.width = videoWidth;
       canvasOutput.height = videoHeight;
+      canvasOutput.style.transform = 'scale(-1,1)';
       streaming = true;
     }
     startVideoProcessing();
