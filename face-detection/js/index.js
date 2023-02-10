@@ -139,7 +139,14 @@ function drawResults(ctx, results, color, size) {
     ctx.lineWidth = 3;
     ctx.strokeStyle = color;
     ctx.strokeRect(rect.x*xRatio, rect.y*yRatio, rect.width*xRatio, rect.height*yRatio);
-    let lerpP = .3;
+    //ctx.strokeRect(10, 10, videoWidth-20,videoHeight-10);//temp
+
+    let xReal = rect.x*xRatio+(rect.width*xRatio/2)
+    let yReal =  (rect.y*yRatio+(rect.height*yRatio/2))
+    let posDist = Math.hypot(x-xReal,y-yReal)
+    let videoDiag = Math.hypot(videoWidth,videoHeight)
+
+    let lerpP =  (posDist/videoDiag)*3
     x = (x)*(1-lerpP) + (rect.x*xRatio+(rect.width*xRatio/2)) * lerpP
     y = (y)*(1-lerpP) + (rect.y*yRatio+(rect.height*yRatio/2)) * lerpP
     
@@ -158,7 +165,7 @@ function drawResults(ctx, results, color, size) {
     
 
     // console.log(centerX)
-    console.log("x: "+ centerX+ " y: "+centerY+ " z: "+centerZ)
+    // console.log("x: "+ centerX+ " y: "+centerY+ " z: "+centerZ)
 
   }
 }
